@@ -174,7 +174,7 @@ foreach ($item in $parsedMaps) {
     )
 }
 
-Set-Content -LiteralPath $configPath -Value $lines -Encoding UTF8
+[IO.File]::WriteAllText($configPath, (($lines -join [Environment]::NewLine) + [Environment]::NewLine), [Text.UTF8Encoding]::new($false))
 
 $exePath = Join-Path $InstallDir "frpc.exe"
 $logPath = Join-Path $InstallDir "frpc.log"
@@ -186,7 +186,8 @@ $runner = @(
     "`$config = '$($configPath.Replace("'", "''"))'",
     "`$log = '$($logPath.Replace("'", "''"))'",
     '"==== $(Get-Date -Format o) starting frpc ====" | Out-File -FilePath $log -Append -Encoding utf8',
-    '& $exe -c $config *>> $log'
+    '& $exe -c $config *>> $log',
+    'exit $LASTEXITCODE'
 )
 Set-Content -LiteralPath $runnerPath -Value $runner -Encoding UTF8
 
