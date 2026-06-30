@@ -66,6 +66,8 @@ configure-public-frps.sh  # 公网 Linux server 端，配置 frps
 configure-local-frpc.sh   # 内网 Linux/WSL local 端，配置 frpc
 server_status.sh          # 公网 Linux server 端，查看 frps 状态
 client_status.sh          # 内网 Linux/WSL local 端，查看 frpc 状态
+server_stop.sh            # 公网 Linux server 端，停止 frps
+client_stop.sh            # 内网 Linux/WSL local 端，停止 frpc
 ```
 
 ## 典型映射
@@ -225,7 +227,28 @@ sudo bash client_status.sh
 sudo /opt/frp/frpc -c /etc/frp/frpc.toml
 ```
 
-## 5. 常见问题
+## 5. 停止服务
+
+公网 server 端停止 `frps`：
+
+```bash
+sudo bash server_stop.sh
+```
+
+WSL local 端停止 `frpc`：
+
+```bash
+sudo bash client_stop.sh
+```
+
+默认只是停止当前服务，开机自启状态不变。如果也要取消开机自启：
+
+```bash
+sudo bash server_stop.sh --disable
+sudo bash client_stop.sh --disable
+```
+
+## 6. 常见问题
 
 - `no matching FRP archive found`：当前目录没有匹配架构的压缩包。普通 WSL 通常需要 `linux_amd64`，树莓派/ARM 服务器通常需要 `linux_arm64` 或 `linux_arm`。
 - 公网访问不通：检查云厂商安全组是否放行 `remotePort`。

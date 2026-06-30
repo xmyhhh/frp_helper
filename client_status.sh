@@ -4,6 +4,23 @@ set -euo pipefail
 CONFIG_FILE="${1:-/etc/frp/frpc.toml}"
 SERVICE_NAME="frpc"
 
+usage() {
+  cat <<'EOF'
+Usage:
+  sudo bash client_status.sh [config-file]
+
+Default config file:
+  /etc/frp/frpc.toml
+
+Run this on the local Linux/WSL machine.
+EOF
+}
+
+if [[ "${1:-}" == "--help" || "${1:-}" == "-h" ]]; then
+  usage
+  exit 0
+fi
+
 section() {
   echo
   echo "== $* =="
@@ -112,4 +129,3 @@ if command -v journalctl >/dev/null 2>&1; then
 else
   echo "journalctl not found"
 fi
-

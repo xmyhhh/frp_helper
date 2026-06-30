@@ -4,6 +4,24 @@ set -euo pipefail
 CONFIG_FILE="${1:-/etc/frp/frps.toml}"
 SERVICE_NAME="frps"
 
+usage() {
+  cat <<'EOF'
+Usage:
+  sudo bash server_status.sh [config-file] [public-port...]
+
+Examples:
+  sudo bash server_status.sh
+  sudo bash server_status.sh /etc/frp/frps.toml 18765 10022
+
+Run this on the public Linux server.
+EOF
+}
+
+if [[ "${1:-}" == "--help" || "${1:-}" == "-h" ]]; then
+  usage
+  exit 0
+fi
+
 section() {
   echo
   echo "== $* =="
@@ -61,6 +79,13 @@ if [[ "$#" -gt 1 ]]; then
   echo "public service ports supplied on command line:"
   for port in "$@"; do
     echo "  ${port}"
+    if command -v ss >/dev/null 2>&1; then
+      if ss -lnt "( sport = :${port} )" | grep -q ":${port}"; then
+        echo "    listen: yes"
+      else
+        echo "    listen: no"
+      fi
+    fi
   done
 else
   echo "Tip: pass public service ports to check, for example:"
@@ -90,4 +115,3 @@ If SSH via FRP cannot connect:
   4. Confirm the public remotePort is listening on this server.
   5. Confirm the cloud security group allows that remotePort, for example 10022/tcp.
 EOF
-
