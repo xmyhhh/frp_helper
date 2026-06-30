@@ -64,6 +64,8 @@ frp_0.69.1_linux_mips64.tar.gz
 ```text
 configure-public-frps.sh  # 公网 Linux server 端，配置 frps
 configure-local-frpc.sh   # 内网 Linux/WSL local 端，配置 frpc
+server_status.sh          # 公网 Linux server 端，查看 frps 状态
+client_status.sh          # 内网 Linux/WSL local 端，查看 frpc 状态
 ```
 
 ## 典型映射
@@ -206,6 +208,7 @@ sudo bash configure-local-frpc.sh \
 ```bash
 sudo systemctl status frps --no-pager
 sudo journalctl -u frps -f
+sudo bash server_status.sh /etc/frp/frps.toml 18080 10022
 ```
 
 WSL local：
@@ -213,6 +216,7 @@ WSL local：
 ```bash
 sudo systemctl status frpc --no-pager
 sudo journalctl -u frpc -f
+sudo bash client_status.sh
 ```
 
 如果 WSL 没有 systemd：
@@ -227,3 +231,4 @@ sudo /opt/frp/frpc -c /etc/frp/frpc.toml
 - 公网访问不通：检查云厂商安全组是否放行 `remotePort`。
 - `frpc` 连不上：检查公网 IP、`serverPort`、token 是否一致。
 - SSH 连不上：确认 WSL 内已安装并启动 `openssh-server`。
+- 公网 server 端使用 `--allow-port 10022` 只负责放行端口；真正的 SSH 映射要在 local 端配置 `--map ssh:22:10022`，并且 WSL 的 `127.0.0.1:22` 必须能连通。

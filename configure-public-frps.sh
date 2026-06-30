@@ -145,7 +145,6 @@ install_frps() {
   local archive="$1"
   local tmp_dir
   tmp_dir="$(mktemp -d)"
-  trap 'rm -rf "${tmp_dir}"' EXIT
 
   info "extracting ${archive}"
   tar -xzf "${archive}" -C "${tmp_dir}"
@@ -155,6 +154,7 @@ install_frps() {
 
   install -d "${INSTALL_DIR}"
   install -m 0755 "${frps_path}" "${INSTALL_DIR}/frps"
+  rm -rf "${tmp_dir}"
 }
 
 write_config() {
