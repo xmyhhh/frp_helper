@@ -177,7 +177,20 @@ foreach ($item in $parsedMaps) {
 Set-Content -LiteralPath $configPath -Value $lines -Encoding UTF8
 
 $exePath = Join-Path $InstallDir "frpc.exe"
-$action = New-ScheduledTaskAction -Execute $exePath -Argument "-c `"$configPath`"" -WorkingDirectory $InstallDir
+$logPath = Join-Path $InstallDir "frpc.log"
+$runnerPath = Join-Path $InstallDir "run-frpc.ps1"
+$runner = @(
+    '$ErrorActionPreference = "Stop"',
+    "Set-Location -LiteralPath '$($InstallDir.Replace("'", "''"))'",
+    "`$exe = '$($exePath.Replace("'", "''"))'",
+    "`$config = '$($configPath.Replace("'", "''"))'",
+    "`$log = '$($logPath.Replace("'", "''"))'",
+    '"==== $(Get-Date -Format o) starting frpc ====" | Out-File -FilePath $log -Append -Encoding utf8',
+    '& $exe -c $config *>> $log'
+)
+Set-Content -LiteralPath $runnerPath -Value $runner -Encoding UTF8
+
+$action = New-ScheduledTaskAction -Execute "powershell.exe" -Argument "-NoProfile -ExecutionPolicy Bypass -File `"$runnerPath`"" -WorkingDirectory $InstallDir
 $trigger = New-ScheduledTaskTrigger -AtStartup
 $principal = New-ScheduledTaskPrincipal -UserId "SYSTEM" -RunLevel Highest
 $settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -RestartCount 999 -RestartInterval (New-TimeSpan -Minutes 1)
@@ -188,6 +201,7 @@ Write-Host ""
 Write-Host "Done. Windows frpc is configured."
 Write-Host "Install dir: $InstallDir"
 Write-Host "Config: $configPath"
+Write-Host "Log: $logPath"
 Write-Host "Scheduled task: $TaskName"
 Write-Host "Public addresses:"
 foreach ($item in $parsedMaps) {

@@ -5,6 +5,7 @@ param(
 
 $ErrorActionPreference = "Continue"
 $configPath = Join-Path $InstallDir "frpc.toml"
+$logPath = Join-Path $InstallDir "frpc.log"
 
 function Section($Title) {
     Write-Host ""
@@ -43,6 +44,7 @@ $task = Get-ScheduledTask -TaskName $TaskName -ErrorAction SilentlyContinue
 if ($task) {
     $task | Format-List TaskName, State, TaskPath
     Get-ScheduledTaskInfo -TaskName $TaskName | Format-List LastRunTime, LastTaskResult, NextRunTime, NumberOfMissedRuns
+    $task.Actions | Format-List Execute, Arguments, WorkingDirectory
 } else {
     Write-Host "task not found: $TaskName"
 }
@@ -100,3 +102,16 @@ Get-NetTCPConnection -State Listen -ErrorAction SilentlyContinue |
     Select-Object LocalAddress, LocalPort, OwningProcess |
     Sort-Object LocalPort |
     Format-Table -AutoSize
+
+Section "frpc log"
+if (Test-Path -LiteralPath $logPath) {
+    Get-Content -LiteralPath $logPath -Tail 120
+} else {
+    Write-Host "log not found: $logPath"
+    Write-Host "Re-run configure-windows-frpc.ps1 once to install the logging runner."
+}
+
+Section "hints"
+Write-Host "If the scheduled task is Ready and LastTaskResult is 1, frpc started then exited."
+Write-Host "Common causes: token mismatch, remotePort already used on server, invalid config, or frps rejected the proxy."
+Write-Host "Check the frpc log above and also run server_status.sh on the public server with the remote port."
