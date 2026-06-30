@@ -98,23 +98,27 @@ validate_map() {
 
 detect_arch() {
   case "$(uname -m)" in
-    x86_64|amd64) echo "amd64" ;;
-    aarch64|arm64) echo "arm64" ;;
-    armv7l) echo "arm" ;;
+    x86_64|amd64) echo "amd64 x86_64" ;;
+    aarch64|arm64) echo "arm64 aarch64" ;;
+    armv7l|armv7*) echo "arm armv7 armhf" ;;
+    armv6l|armv6*) echo "arm armv6" ;;
     mips64) echo "mips64" ;;
-    mips64el) echo "mips64le" ;;
+    mips64el) echo "mips64le mips64el" ;;
     *) die "unsupported architecture: $(uname -m)" ;;
   esac
 }
 
 find_archive() {
-  local arch="$1"
+  local arch_candidates="$1"
   local matches=()
   shopt -s nullglob
-  matches=("${SCRIPT_DIR}"/frp_*_linux_"${arch}".tar.gz)
+  local arch
+  for arch in ${arch_candidates}; do
+    matches+=("${SCRIPT_DIR}"/frp_*_linux_"${arch}".tar.gz)
+  done
   shopt -u nullglob
   if [[ "${#matches[@]}" -eq 0 ]]; then
-    die "no matching FRP archive found for linux_${arch} in ${SCRIPT_DIR}. Put frp_*_linux_${arch}.tar.gz here or pass --archive."
+    die "no matching FRP archive found for $(uname -m) in ${SCRIPT_DIR}. Expected one of: ${arch_candidates}. Pass --archive to choose manually."
   fi
   if [[ "${#matches[@]}" -gt 1 ]]; then
     die "multiple matching archives found. Pass --archive explicitly."

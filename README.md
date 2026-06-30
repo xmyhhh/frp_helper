@@ -2,19 +2,62 @@
 
 这个目录是一个独立的 FRP 配置工具包，用来把内网 Linux/WSL 服务映射到公网服务器。
 
+## FRP 是怎么工作的
+
+家里电脑、公司内网机器、Windows 里的 WSL 通常没有公网 IP，公网用户不能直接访问它们的 `127.0.0.1:8765`、`22`、`3000` 这类端口。
+
+FRP 的做法是让内网机器主动连出去：
+
+```text
+浏览器 / SSH 客户端
+  -> 公网服务器的端口
+  -> frps，运行在公网服务器
+  -> 已建立的 FRP 隧道
+  -> frpc，运行在内网 Linux/WSL
+  -> 内网服务，例如 127.0.0.1:8765 或 127.0.0.1:22
+```
+
+也就是说：
+
+- `frps` 放在有公网 IP 的服务器上，负责接公网流量。
+- `frpc` 放在内网 Linux/WSL 里，主动连接 `frps`。
+- 端口映射告诉 FRP：公网哪个端口，要转发到内网哪个端口。
+
+例子：
+
+```text
+公网服务器IP:18080 -> WSL 127.0.0.1:8765
+公网服务器IP:10022 -> WSL 127.0.0.1:22
+```
+
+所以你不需要在家里路由器做端口转发，也不需要 Nginx。只要公网服务器能被访问、WSL 能连到公网服务器，映射就能工作。
+
 不依赖在线下载。脚本会直接使用当前目录里的 FRP 压缩包：
 
 ```text
 frp_*_linux_<arch>.tar.gz
 ```
 
-注意：压缩包架构必须和运行脚本的机器匹配。常见 WSL/云服务器一般是 `linux_amd64`，例如：
+注意：压缩包架构必须和运行脚本的机器匹配。脚本会按 `uname -m` 自动选择当前目录里的匹配包。
+
+常见匹配关系：
+
+```text
+x86_64 / amd64   -> frp_*_linux_amd64.tar.gz
+aarch64 / arm64  -> frp_*_linux_arm64.tar.gz
+armv7l / armv7   -> frp_*_linux_arm.tar.gz, frp_*_linux_armv7.tar.gz, or frp_*_linux_armhf.tar.gz
+mips64           -> frp_*_linux_mips64.tar.gz
+```
+
+当前目录已经放了：
 
 ```text
 frp_0.69.1_linux_amd64.tar.gz
+frp_0.69.1_linux_arm64.tar.gz
+frp_0.69.1_linux_mips64.tar.gz
 ```
 
-如果当前目录只有 `frp_0.69.1_linux_mips64.tar.gz`，它只能用于 `mips64` Linux，不能用于普通 x86_64/amd64 WSL 或云服务器。
+普通 WSL 和大多数云服务器通常会自动选 `linux_amd64`。
 
 ## 文件
 
@@ -180,8 +223,7 @@ sudo /opt/frp/frpc -c /etc/frp/frpc.toml
 
 ## 5. 常见问题
 
-- `no matching FRP archive found`：当前目录没有匹配架构的压缩包。普通 WSL 通常需要 `linux_amd64`。
+- `no matching FRP archive found`：当前目录没有匹配架构的压缩包。普通 WSL 通常需要 `linux_amd64`，树莓派/ARM 服务器通常需要 `linux_arm64` 或 `linux_arm`。
 - 公网访问不通：检查云厂商安全组是否放行 `remotePort`。
 - `frpc` 连不上：检查公网 IP、`serverPort`、token 是否一致。
 - SSH 连不上：确认 WSL 内已安装并启动 `openssh-server`。
-
