@@ -26,6 +26,7 @@ if ($task) {
 }
 
 Get-Process frpc -ErrorAction SilentlyContinue | Stop-Process -Force
+Start-Sleep -Seconds 1
 
 Write-Host ""
 if ($Disable) {

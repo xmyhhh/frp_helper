@@ -138,6 +138,13 @@ if (-not (Test-Path -LiteralPath $Archive)) {
     throw "Archive not found: $Archive"
 }
 
+$existingTask = Get-ScheduledTask -TaskName $TaskName -ErrorAction SilentlyContinue
+if ($existingTask) {
+    Stop-ScheduledTask -TaskName $TaskName -ErrorAction SilentlyContinue
+}
+Get-Process frpc -ErrorAction SilentlyContinue | Stop-Process -Force
+Start-Sleep -Seconds 2
+
 $tmp = Join-Path $env:TEMP ("frp-" + [guid]::NewGuid().ToString("N"))
 New-Item -ItemType Directory -Path $tmp | Out-Null
 try {
